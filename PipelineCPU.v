@@ -67,7 +67,7 @@ module PipelineCPU(
     wire BrForwardingB;
     wire [31:0] BrJuderA;
     wire [31:0] BrJuderB; 
-    BranchForwarding BrForwarding(rs_ID, rt_ID, Rw_MEM, BrForwardingA, BrForwardingB);
+    BranchForwarding BrForwarding(rs_ID, rt_ID, Rw_MEM, RegWrite_MEM, BrForwardingA, BrForwardingB);
     assign BrJuderA = BrForwardingA ? ALUOut_MEM : dataA_ID;
     assign BrJuderB = BrForwardingB ? ALUOut_MEM : dataB_ID;
     BranchJudge BranchJudger(OpCode_ID, BrJuderA, BrJuderB, Branch_ID, Zero);
@@ -92,12 +92,13 @@ module PipelineCPU(
     wire [4:0] Shamt_EX;
     wire [4:0] rt_EX;
     wire [4:0] rd_EX;
+    wire Sign_EX;
     ID_EX IDEXReg(
         clk, reset, flush_IDEX, RegWrite_ID, Branch_ID, MemRead_ID, MemWrite_ID, 
         MemtoReg_ID, ALUSrcA_ID, ALUSrcB_ID, ALUCtrl_ID, RegDst_ID, dataA_ID, dataB_ID, 
-        ImmExtOut_ID, Shamt_ID, rt_ID, rd_ID, RegWrite_EX, Branch_EX, MemRead_EX, MemWrite_EX,
+        ImmExtOut_ID, Shamt_ID, rt_ID, rd_ID, Sign_ID, RegWrite_EX, Branch_EX, MemRead_EX, MemWrite_EX,
         MemtoReg_EX, ALUSrcA_EX, ALUSrcB_EX, ALUCtrl_EX, RegDst_EX, dataA_EX, dataB_EX, 
-        ImmExtOut_EX, Shamt_EX, rt_EX, rd_EX
+        ImmExtOut_EX, Shamt_EX, rt_EX, rd_EX, Sign_EX
     );
 
     assign Rw_EX = RegDst_EX == 2'b00 ? rt_EX : RegDst_EX == 2'b01 ? rd_EX : 31; // 0: rt; 1: rd; 2: ra
@@ -105,18 +106,33 @@ module PipelineCPU(
     assign hold_IFID = (RegWrite_EX && Branch_EX && (Rw_EX == rs_EX || Rw_EX == rt_EX));
     assign flush_IDEX = hold_IFID;
 
-// Things below haven't been done
-    wire [31:0] dataA_EX;
-    wire [31:0] dataB_EX;
-    wire [31:0] ALUinA_EX;
-    wire [31:0] ALUinB_EX;
-    assign ALUinA_EX = ALUSrcA_EX == 2'b10 ? {27'h0000000, Shamt_EX} : ALUSrcA_EX == 2'b00 ? PC_now : dataA_EX;
-    assign ALUinB_EX = ALUSrcB == 2'b11 ? ImmExtShift : 
-                       ALUSrcB == 2'b10 ? ImmExtOut : 
-                       ALUSrcB == 2'b01 ? 32'd04 : dataB_EX;
+    wire [1:0] ALUChooseA;
+    wire [1:0] ALUChooseB;
+    ALUForwarding ALUForward(rs_EX, rt_EX, Rw_MEM, Rw_WB, RegWrite_MEM, RegWrite_WB, ALUSrcA_EX, ALUSrcB_EX, ALUChooseA, ALUChooseB);
+
+    wire [31:0] ALUinA;
+    wire [31:0] ALUinB;
+    assign ALUinA = ALUChooseA == 1 ? {27'h0000000, Shamt_EX} :
+                    ALUChooseA == 2 ? WriteData_MEM :
+                    ALUChooseA == 3 ? WriteData_WB: dataA_EX;
+    assign ALUinB = ALUChooseB == 1 ? ImmExtOut_EX :
+                    ALUChooseB == 2 ? WriteData_MEM :
+                    ALUChooseB == 3 ? WriteData_WB: dataB_EX;
+
+    wire [31:0] ALUOut_EX;
+    ALU ALUCalculate(ALUCtrl_EX, Sign_EX, ALUinA, ALUinB, ALUOut_EX);
 
     // MEM
+    wire MemRead_MEM;
+    wire MemWrite_MEM;
     wire [31:0] ALUOut_MEM;
+    wire [4:0] Rw_MEM;
+    wire MemtoReg_MEM;
+    wire RegWrite_MEM;
+    EX_MEM EXMEMReg(
+        clk, reset, MemRead_EX, MemWrite_EX, ALUOut_EX, Rw_EX, MemtoReg_EX, RegWrite_EX, 
+        MemRead_MEM, MemWrite_MEM, ALUOut_MEM, Rw_MEM, MemtoReg_MEM, RegWrite_MEM        
+    );
 
     // PC
     assign PC_new = PCSrc_ID == 1 ? {PC_ID[31:28], rs_ID, rt_ID, rd_ID, Shamt_ID, Funct_ID, 2'b00} :

@@ -18,6 +18,7 @@ module ID_EX(
     input wire [4:0] Shamt_ID,
     input wire [4:0] rt_ID,
     input wire [4:0] rd_ID,
+    input wire Sign_ID,
 
     output reg RegWrite_EX,
     output reg Branch_EX,
@@ -34,6 +35,7 @@ module ID_EX(
     output reg [4:0] Shamt_EX,
     output reg [4:0] rt_EX,
     output reg [4:0] rd_EX,
+    output reg Sign_EX
 );
 
 initial begin
@@ -52,6 +54,7 @@ initial begin
     Shamt_EX <= 0;
     rt_EX <= 0;
     rd_EX <= 0;
+    Sign_EX <= 0;
 end
 
 always@(posedge clk or posedge reset) begin
@@ -71,6 +74,7 @@ always@(posedge clk or posedge reset) begin
         Shamt_EX <= 0;
         rt_EX <= 0;
         rd_EX <= 0;
+        Sign_EX <= 0;
     end
     else begin
         RegWrite_EX <= RegWrite_ID;
@@ -88,6 +92,7 @@ always@(posedge clk or posedge reset) begin
         Shamt_EX <= Shamt_ID;
         rt_EX <= rt_ID;
         rd_EX <= rd_ID;
+        Sign_EX <= Sign_ID;
     end
 end
 
