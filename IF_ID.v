@@ -54,6 +54,15 @@ always @(posedge clk or posedge reset) begin
             PC_ID <= PC_IF;
         end
     end
+    else begin
+        OpCode <= OpCode;
+        rs <= rs;
+        rt <= rt;
+        rd <= rd;
+        Shamt <= Shamt;
+        Funct <= Funct;
+        PC_ID <= PC_ID;
+    end
 end
 
 endmodule

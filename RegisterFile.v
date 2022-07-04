@@ -6,10 +6,13 @@ module RegisterFile(clk, reset, RegWrite, Read_register1, Read_register2, Write_
 	output [31:0] Read_data1, Read_data2;
 	
 	reg [31:0] RF_data[31:0];
+	wire Writable;
 	
-	assign Read_data1 = Write_register == Read_register1 ? Write_data :
+	assign Writable = RegWrite && (Write_register != 5'b00000);
+	
+	assign Read_data1 = (Write_register == Read_register1 && Writable) ? Write_data :
 						(Read_register1 == 5'b00000)? 32'h00000000: RF_data[Read_register1];
-	assign Read_data2 = Write_register == Read_register2 ? Write_data :
+	assign Read_data2 = (Write_register == Read_register2 && Writable) ? Write_data :
 						(Read_register2 == 5'b00000)? 32'h00000000: RF_data[Read_register2];
 	
 	integer i;
@@ -17,7 +20,7 @@ module RegisterFile(clk, reset, RegWrite, Read_register1, Read_register2, Write_
 		if (reset)
 			for (i = 1; i < 32; i = i + 1)
 				RF_data[i] <= 32'h00000000;
-		else if (RegWrite && (Write_register != 5'b00000))
+		else if (Writable)
 			RF_data[Write_register] <= Write_data;
 
 endmodule

@@ -2,6 +2,7 @@ module ID_EX(
     input wire clk,
     input wire reset,
     input wire flush_IDEX,
+    //input wire hold_IDEX,
 
     input wire RegWrite_ID,
     input wire Branch_ID,
@@ -19,6 +20,7 @@ module ID_EX(
     input wire [4:0] rt_ID,
     input wire [4:0] rd_ID,
     input wire Sign_ID,
+    input wire LoadByte_ID,
 
     output reg RegWrite_EX,
     output reg Branch_EX,
@@ -35,7 +37,8 @@ module ID_EX(
     output reg [4:0] Shamt_EX,
     output reg [4:0] rt_EX,
     output reg [4:0] rd_EX,
-    output reg Sign_EX
+    output reg Sign_EX,
+    output reg LoadByte_EX
 );
 
 initial begin
@@ -55,6 +58,7 @@ initial begin
     rt_EX <= 0;
     rd_EX <= 0;
     Sign_EX <= 0;
+    LoadByte_EX <= 0;
 end
 
 always@(posedge clk or posedge reset) begin
@@ -75,6 +79,7 @@ always@(posedge clk or posedge reset) begin
         rt_EX <= 0;
         rd_EX <= 0;
         Sign_EX <= 0;
+        LoadByte_EX <= 0;
     end
     else begin
         RegWrite_EX <= RegWrite_ID;
@@ -93,7 +98,27 @@ always@(posedge clk or posedge reset) begin
         rt_EX <= rt_ID;
         rd_EX <= rd_ID;
         Sign_EX <= Sign_ID;
+        LoadByte_EX <= LoadByte_ID;
     end
+    // else begin
+    //     RegWrite_EX <= RegWrite_EX;
+    //     Branch_EX <= Branch_EX;
+    //     MemRead_EX <= MemRead_EX;
+    //     MemWrite_EX <= MemWrite_EX;
+    //     MemtoReg_EX <= MemtoReg_EX;
+    //     ALUSrcA_EX <= ALUSrcA_EX;
+    //     ALUSrcB_EX <= ALUSrcB_EX;
+    //     ALUCtrl_EX <= ALUCtrl_EX;
+    //     RegDst_EX <= RegDst_EX;
+    //     dataA_EX <= dataA_EX;
+    //     dataB_EX <= dataB_EX;
+    //     ImmExtOut_EX <= ImmExtOut_EX;
+    //     Shamt_EX <= Shamt_EX;
+    //     rt_EX <= rt_EX;
+    //     rd_EX <= rd_EX;
+    //     Sign_EX <= Sign_EX;
+    //     LoadByte_EX <= LoadByte_EX;
+    // end
 end
 
 endmodule

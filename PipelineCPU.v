@@ -2,6 +2,7 @@
 // 1.所有模块需要 clk 和 reset 的，clk 在第1位，reset 在第2位
 // 2.分支指令在 ID 阶段判断
 // 3.对于某阶段的寄存器，命名方式为：名称_阶段，如 PC_new。在该阶段产生的控制信号，可以省略阶段名。
+// 4.load 后暂时不能接branch
 
 module PipelineCPU(
     input wire sysclk,
@@ -76,6 +77,7 @@ module PipelineCPU(
     wire hold_IFID;
     wire flush_IDEX;
     wire [4:0] Rw_EX;
+    //wire hold_IDEX;
 
     wire RegWrite_EX;
     wire Branch_EX;
@@ -93,17 +95,19 @@ module PipelineCPU(
     wire [4:0] rt_EX;
     wire [4:0] rd_EX;
     wire Sign_EX;
+    wire LoadByte_EX;
     ID_EX IDEXReg(
         clk, reset, flush_IDEX, RegWrite_ID, Branch_ID, MemRead_ID, MemWrite_ID, 
         MemtoReg_ID, ALUSrcA_ID, ALUSrcB_ID, ALUCtrl_ID, RegDst_ID, dataA_ID, dataB_ID, 
-        ImmExtOut_ID, Shamt_ID, rt_ID, rd_ID, Sign_ID, RegWrite_EX, Branch_EX, MemRead_EX, MemWrite_EX,
+        ImmExtOut_ID, Shamt_ID, rt_ID, rd_ID, Sign_ID, LoadByte_ID, RegWrite_EX, Branch_EX, MemRead_EX, MemWrite_EX,
         MemtoReg_EX, ALUSrcA_EX, ALUSrcB_EX, ALUCtrl_EX, RegDst_EX, dataA_EX, dataB_EX, 
-        ImmExtOut_EX, Shamt_EX, rt_EX, rd_EX, Sign_EX
+        ImmExtOut_EX, Shamt_EX, rt_EX, rd_EX, Sign_EX, LoadByte_EX
     );
 
     assign Rw_EX = RegDst_EX == 2'b00 ? rt_EX : RegDst_EX == 2'b01 ? rd_EX : 31; // 0: rt; 1: rd; 2: ra
    
-    assign hold_IFID = (RegWrite_EX && Branch_EX && (Rw_EX == rs_EX || Rw_EX == rt_EX));
+    assign hold_IFID = (RegWrite_EX && Branch_EX && (Rw_EX == rs_EX || Rw_EX == rt_EX)) ||
+                       (MemRead_EX && (rt_EX == rs_ID || rt_EX == rt_ID));  // next inst is branch, stall || load use hazard
     assign flush_IDEX = hold_IFID;
 
     wire [1:0] ALUChooseA;
@@ -129,13 +133,29 @@ module PipelineCPU(
     wire [4:0] Rw_MEM;
     wire MemtoReg_MEM;
     wire RegWrite_MEM;
+    wire [31:0] rt_MEM;
+    wire LoadByte_MEM;
     EX_MEM EXMEMReg(
-        clk, reset, MemRead_EX, MemWrite_EX, ALUOut_EX, Rw_EX, MemtoReg_EX, RegWrite_EX, 
-        MemRead_MEM, MemWrite_MEM, ALUOut_MEM, Rw_MEM, MemtoReg_MEM, RegWrite_MEM        
+        clk, reset, MemRead_EX, MemWrite_EX, ALUOut_EX, Rw_EX, MemtoReg_EX, RegWrite_EX, rt_EX, LoadByte_EX,
+        MemRead_MEM, MemWrite_MEM, ALUOut_MEM, Rw_MEM, MemtoReg_MEM, RegWrite_MEM, rt_MEM, LoadByte_MEM  
     );
 
+    wire [31:0] ReadData_Temp;
+    DataMemory DataMem(clk, reset, ALUOut_MEM, rt_MEM, ReadData_Temp, MemRead_MEM, MemWrite_MEM);
+
+    wire [31:0] ReadData_MEM;
+    assign ReadData_MEM = LoadByte_MEM == 0 ? ReadData_Temp :   
+                          rt_MEM[1:0] == 2'b00 ? {{24{ReadData_Temp[7]}}, ReadData_Temp[7:0]} :
+                          rt_MEM[1:0] == 2'b01 ? {{24{ReadData_Temp[15]}}, ReadData_Temp[15:8]} :
+                          rt_MEM[1:0] == 2'b10 ? {{24{ReadData_Temp[24]}}, ReadData_Temp[23:16]} :
+                          {{24{ReadData_Temp[31]}}, ReadData_Temp[31:24]};
+
+    // WB
+    
+
     // PC
-    assign PC_new = PCSrc_ID == 1 ? {PC_ID[31:28], rs_ID, rt_ID, rd_ID, Shamt_ID, Funct_ID, 2'b00} :
+    assign PC_new = hold_IFID ? PC_now :
+                    PCSrc_ID == 1 ? {PC_ID[31:28], rs_ID, rt_ID, rd_ID, Shamt_ID, Funct_ID, 2'b00} :
                     PCSrc_ID == 2 ? dataA_ID :
                     (Branch_ID && Zero) ? PC_now + ImmExtShift_ID : 
                     PC_now + 4;         

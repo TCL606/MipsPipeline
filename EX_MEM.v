@@ -8,13 +8,17 @@ module EX_MEM(
     input wire [4:0] Rw_EX,
     input wire MemtoReg_EX,
     input wire RegWrite_EX,
+    input wire [31:0] rt_EX,
+    input wire LoadByte_EX,
 
     output reg MemRead_MEM,
     output reg MemWrite_MEM,
     output reg [31:0] ALUOut_MEM,
     output reg [4:0] Rw_MEM,
     output reg MemtoReg_MEM,
-    output reg RegWrite_MEM
+    output reg RegWrite_MEM,
+    output reg [31:0] rt_MEM,
+    output reg LoadByte_MEM
 );
 
 initial begin
@@ -24,6 +28,8 @@ initial begin
     Rw_MEM <= 0;
     MemtoReg_MEM <= 0;
     RegWrite_MEM <= 0;
+    rt_MEM <= 0;
+    LoadByte_MEM <= 0;
 end
 
 always@(posedge clk or posedge reset) begin
@@ -34,6 +40,8 @@ always@(posedge clk or posedge reset) begin
         Rw_MEM <= 0;
         MemtoReg_MEM <= 0;
         RegWrite_MEM <= 0;
+        rt_MEM <= 0;
+        LoadByte_MEM <= 0;
     end
     else begin
         MemRead_MEM <= MemRead_EX;
@@ -42,6 +50,8 @@ always@(posedge clk or posedge reset) begin
         Rw_MEM <= Rw_EX;
         MemtoReg_MEM <= MemtoReg_EX;
         RegWrite_MEM <= RegWrite_EX;
+        rt_MEM <= rt_EX;
+        LoadByte_MEM <= LoadByte_EX;
     end
 end
 
