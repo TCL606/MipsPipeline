@@ -121,9 +121,9 @@ module PipelineCPU(
     assign Rw_EX = RegDst_EX == 2'b00 ? rt_EX : RegDst_EX == 2'b01 ? rd_EX : 31; // 0: rt; 1: rd; 2: ra
    
     assign hold_IFID = ((RegWrite_EX && Branch_ID && (Rw_EX == rs_ID || Rw_EX == rt_ID)) && Load_EX == 0) ||
-                       (MemRead_EX && (rt_EX == rs_ID || rt_EX == rt_ID));  // next inst is branch && !Load, stall || load use hazard
+                       (MemRead_EX && (rt_EX == rs_ID || rt_EX == rt_ID) && Load_EX);  // next inst is branch && !Load, stall || load use hazard
     assign flush_IDEX = (RegWrite_EX && Branch_ID && (Rw_EX == rs_ID || Rw_EX == rt_ID)) ||
-                        (MemRead_EX && (rt_EX == rs_ID || rt_EX == rt_ID));
+                        (MemRead_EX && (rt_EX == rs_ID || rt_EX == rt_ID) && Load_EX);
 
     wire [1:0] ALUChooseA;
     wire [1:0] ALUChooseB;

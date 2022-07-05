@@ -26,7 +26,7 @@ initial begin
 end
 
 always @(posedge clk or posedge reset) begin
-    if(reset) begin
+    if(reset || flush_IFID) begin       // || flush_IFID
         OpCode <= 0;
         rs <= 0;
         rt <= 0;
@@ -35,27 +35,7 @@ always @(posedge clk or posedge reset) begin
         Funct <= 0;
         PC_ID <= 0;
     end
-    else if(!hold) begin
-        if(flush_IFID) begin
-            OpCode <= 0;
-            rs <= 0;
-            rt <= 0;
-            rd <= 0;
-            Shamt <= 0;
-            Funct <= 0;
-            PC_ID <= 0;
-        end
-        else begin
-            OpCode <= Instruction[31:26];
-            rs <= Instruction[25:21];
-            rt <= Instruction[20:16];
-            rd <= Instruction[15:11];
-            Shamt <= Instruction[10:6];
-            Funct <= Instruction[5:0];
-            PC_ID <= PC_IF;
-        end
-    end
-    else begin
+    else if (hold) begin
         OpCode <= OpCode;
         rs <= rs;
         rt <= rt;
@@ -64,6 +44,45 @@ always @(posedge clk or posedge reset) begin
         Funct <= Funct;
         PC_ID <= PC_ID;
     end
+    else begin
+        OpCode <= Instruction[31:26];
+        rs <= Instruction[25:21];
+        rt <= Instruction[20:16];
+        rd <= Instruction[15:11];
+        Shamt <= Instruction[10:6];
+        Funct <= Instruction[5:0];
+        PC_ID <= PC_IF;
+    end
+//     else if(!hold) begin
+//         if(flush_IFID) begin
+//             OpCode <= 0;
+//             rs <= 0;
+//             rt <= 0;
+//             rd <= 0;
+//             Shamt <= 0;
+//             Funct <= 0;
+//             PC_ID <= 0;
+//         end
+//         else begin
+//             OpCode <= Instruction[31:26];
+//             rs <= Instruction[25:21];
+//             rt <= Instruction[20:16];
+//             rd <= Instruction[15:11];
+//             Shamt <= Instruction[10:6];
+//             Funct <= Instruction[5:0];
+//             PC_ID <= PC_IF;
+//         end
+//     end
+//     else begin
+//         OpCode <= OpCode;
+//         rs <= rs;
+//         rt <= rt;
+//         rd <= rd;
+//         Shamt <= Shamt;
+//         Funct <= Funct;
+//         PC_ID <= PC_ID;
+//     end
+
 end
 
 endmodule
