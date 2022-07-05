@@ -1,3 +1,4 @@
+`timescale 1ns / 1ps
 module ALUForwarding(
     input wire [4:0] rs_EX,
     input wire [4:0] rt_EX,

@@ -1,3 +1,4 @@
+`timescale 1ns / 1ps
 module Control(OpCode, Funct,
 	PCSrc, Branch, RegWrite, RegDst, 
 	MemRead, MemWrite, MemtoReg, 

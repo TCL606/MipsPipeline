@@ -1,3 +1,4 @@
+`timescale 1ns / 1ps
 module DataMemory(clk, reset, Address, Write_data, Read_data, MemRead, MemWrite);
 	input clk, reset;
 	input [31:0] Address, Write_data;

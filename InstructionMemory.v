@@ -1,3 +1,4 @@
+`timescale 1ns / 1ps
 module InstructionMemory(Address, Instruction);
     input wire [31:0] Address;
 	output reg [31:0] Instruction;

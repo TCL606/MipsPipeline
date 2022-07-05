@@ -1,3 +1,4 @@
+`timescale 1ns / 1ps
 module BranchJudge(
     input wire [5:0] OpCode,
     input wire [31:0] data1_ID,

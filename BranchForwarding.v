@@ -1,3 +1,4 @@
+`timescale 1ns / 1ps
 module BranchForwarding(
     input wire [4:0] rs,
     input wire [4:0] rt,
