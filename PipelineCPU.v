@@ -1,8 +1,3 @@
-// 规范TCL�???
-// 1.�???有模块需�??? clk �??? reset 的，clk 在第1位，reset 在第2�???
-// 2.分支指令�??? ID 阶段判断
-// 3.对于某阶段的寄存器，命名方式为：名称_阶段，如 PC_new。在该阶段产生的控制信号，可以省略阶段名�???
-// 4.load后暂时不能接branch
 `timescale 1ns / 1ps
 module PipelineCPU(
     input wire sysclk,
@@ -85,6 +80,9 @@ module PipelineCPU(
     assign BrJuderB = BrForwardingB == 1 ? ALUOut_MEM : 
                       BrForwardingB == 2 ? WriteData_WB : dataB_ID;
     BranchJudge BranchJudger(OpCode_ID, BrJuderA, BrJuderB, Branch_ID, Zero);
+    
+    wire [31:0] PC_Branch;
+    assign PC_Branch = Branch_ID && Zero ? PC_ID + 4 + ImmExtShift_ID : PC_ID + 4; 
 
     // EX
     wire flush_IDEX;
@@ -187,11 +185,13 @@ module PipelineCPU(
                           MemtoReg_WB == 2 ? PC_WB : ALUOut_WB;
 
     // PC
-    assign PC_new = (RegWrite_EX && Branch_ID && (Rw_EX == rs_ID || Rw_EX == rt_ID)) && Load_EX ? PC_now - 4:
+    assign PC_new = (RegWrite_EX && Branch_ID && (Rw_EX == rs_ID || Rw_EX == rt_ID) && Load_EX) ? PC_now - 4 :
                     hold_IFID ? PC_now :
                     PCSrc_ID == 1 ? {PC_ID[31:28], rs_ID, rt_ID, rd_ID, Shamt_ID, Funct_ID, 2'b00} :
                     PCSrc_ID == 2 ? dataA_ID + 4:
-                    (Branch_ID && Zero) ? PC_now + ImmExtShift_ID : 
+                    // (Branch_ID && Zero) ? PC_now + ImmExtShift_ID : // ID stage Judge: PC_now has plused 4
+                    // Branch_ID ? PC_now :
+                    Branch_ID ? PC_Branch :
                     PC_now + 4;         
     PC PCConctroller(clk, reset, PC_new, PC_now);
     

@@ -12,7 +12,7 @@ module test_pipeline();
 	initial begin
 		reset = 1;
 		clk = 1;
-		#100 reset = 0;
+		#10 reset = 0;
 	end
 	
 	always #5 clk = ~clk;

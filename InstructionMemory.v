@@ -59,8 +59,8 @@ module InstructionMemory(Address, Instruction);
 		data[9'd22] <= 32'h21080001;
 		data[9'd23] <= 32'h08100007;
 		data[9'd24] <= 32'h00101020;
-
-		for (i = 9'd25; i < MEM_SIZE; i = i + 1) begin
+		data[9'd25] <= 32'h1000ffff;
+		for (i = 9'd26; i < MEM_SIZE; i = i + 1) begin
         	data[i] <= 0;
     	end
 	end 
