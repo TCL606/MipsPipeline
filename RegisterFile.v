@@ -1,3 +1,4 @@
+`timescale 1ns / 1ps
 module RegisterFile(clk, reset, RegWrite, Read_register1, Read_register2, Write_register, Write_data, Read_data1, Read_data2);
 	input reset, clk;
 	input RegWrite;

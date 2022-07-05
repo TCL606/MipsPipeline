@@ -1,20 +1,21 @@
-// 规范TCL：
-// 1.所有模块需要 clk 和 reset 的，clk 在第1位，reset 在第2位
-// 2.分支指令在 ID 阶段判断
-// 3.对于某阶段的寄存器，命名方式为：名称_阶段，如 PC_new。在该阶段产生的控制信号，可以省略阶段名。
-// 4.load 后暂时不能接branch
-
+// 规范TCL�??
+// 1.�??有模块需�?? clk �?? reset 的，clk 在第1位，reset 在第2�??
+// 2.分支指令�?? ID 阶段判断
+// 3.对于某阶段的寄存器，命名方式为：名称_阶段，如 PC_new。在该阶段产生的控制信号，可以省略阶段名�??
+// 4.load后暂时不能接branch
+`timescale 1ns / 1ps
 module PipelineCPU(
     input wire sysclk,
     input wire reset,
+    output wire [31:0] out
 );
 
     wire clk;
     assign clk = sysclk;
 
-    reg [31:0] Instruction;
+    wire [31:0] Instruction;
     wire [31:0] PC_now;   // PC_IF
-    reg [31:0] PC_new;
+    wire [31:0] PC_new;
 
     // IF
     InstructionMemory InstMemory(PC_now, Instruction);
@@ -29,7 +30,7 @@ module PipelineCPU(
     wire [31:0] PC_ID;
     wire flush_IFID;
     wire hold_IFID;
-    IF_ID IFIDReg(clk, reset, flush_IFID, hold_IFID, Instruction, PC_now, OpCode_ID, rs_ID, rt_ID, rd, Shamt_ID, Funct_ID, PC_ID);
+    IF_ID IFIDReg(clk, reset, flush_IFID, hold_IFID, Instruction, PC_now, OpCode_ID, rs_ID, rt_ID, rd_ID, Shamt_ID, Funct_ID, PC_ID);
 
     wire [1:0] PCSrc_ID;
 	wire Branch_ID;
@@ -68,13 +69,15 @@ module PipelineCPU(
     wire BrForwardingB;
     wire [31:0] BrJuderA;
     wire [31:0] BrJuderB; 
+    
+    wire [4:0] Rw_MEM;
+    wire RegWrite_MEM;
     BranchForwarding BrForwarding(rs_ID, rt_ID, Rw_MEM, RegWrite_MEM, BrForwardingA, BrForwardingB);
     assign BrJuderA = BrForwardingA ? ALUOut_MEM : dataA_ID;
     assign BrJuderB = BrForwardingB ? ALUOut_MEM : dataB_ID;
     BranchJudge BranchJudger(OpCode_ID, BrJuderA, BrJuderB, Branch_ID, Zero);
 
     // EX
-    wire hold_IFID;
     wire flush_IDEX;
     wire [4:0] Rw_EX;
     //wire hold_IDEX;
@@ -83,7 +86,7 @@ module PipelineCPU(
     wire Branch_EX;
     wire MemRead_EX;
     wire MemWrite_EX;
-    wire MemtoReg_EX;
+    wire [1:0] MemtoReg_EX;
     wire ALUSrcA_EX;
     wire ALUSrcB_EX;
     wire [4:0] ALUCtrl_EX;
@@ -92,16 +95,19 @@ module PipelineCPU(
     wire [31:0] dataB_EX;
     wire [31:0] ImmExtOut_EX;
     wire [4:0] Shamt_EX;
+    wire [4:0] rs_EX;
     wire [4:0] rt_EX;
     wire [4:0] rd_EX;
     wire Sign_EX;
     wire LoadByte_EX;
+    wire [31:0] PC_EX;
     ID_EX IDEXReg(
         clk, reset, flush_IDEX, RegWrite_ID, Branch_ID, MemRead_ID, MemWrite_ID, 
         MemtoReg_ID, ALUSrcA_ID, ALUSrcB_ID, ALUCtrl_ID, RegDst_ID, dataA_ID, dataB_ID, 
-        ImmExtOut_ID, Shamt_ID, rt_ID, rd_ID, Sign_ID, LoadByte_ID, RegWrite_EX, Branch_EX, MemRead_EX, MemWrite_EX,
+        ImmExtOut_ID, Shamt_ID, rs_ID, rt_ID, rd_ID, Sign_ID, LoadByte_ID, PC_ID,
+        RegWrite_EX, Branch_EX, MemRead_EX, MemWrite_EX,
         MemtoReg_EX, ALUSrcA_EX, ALUSrcB_EX, ALUCtrl_EX, RegDst_EX, dataA_EX, dataB_EX, 
-        ImmExtOut_EX, Shamt_EX, rt_EX, rd_EX, Sign_EX, LoadByte_EX
+        ImmExtOut_EX, Shamt_EX, rs_EX, rt_EX, rd_EX, Sign_EX, LoadByte_EX, PC_EX
     );
 
     assign Rw_EX = RegDst_EX == 2'b00 ? rt_EX : RegDst_EX == 2'b01 ? rd_EX : 31; // 0: rt; 1: rd; 2: ra
@@ -117,10 +123,10 @@ module PipelineCPU(
     wire [31:0] ALUinA;
     wire [31:0] ALUinB;
     assign ALUinA = ALUChooseA == 1 ? {27'h0000000, Shamt_EX} :
-                    ALUChooseA == 2 ? WriteData_MEM :
+                    ALUChooseA == 2 ? ALUOut_MEM :
                     ALUChooseA == 3 ? WriteData_WB: dataA_EX;
     assign ALUinB = ALUChooseB == 1 ? ImmExtOut_EX :
-                    ALUChooseB == 2 ? WriteData_MEM :
+                    ALUChooseB == 2 ? ALUOut_MEM :
                     ALUChooseB == 3 ? WriteData_WB: dataB_EX;
 
     wire [31:0] ALUOut_EX;
@@ -130,28 +136,42 @@ module PipelineCPU(
     wire MemRead_MEM;
     wire MemWrite_MEM;
     wire [31:0] ALUOut_MEM;
-    wire [4:0] Rw_MEM;
-    wire MemtoReg_MEM;
-    wire RegWrite_MEM;
-    wire [31:0] rt_MEM;
+    //wire [4:0] Rw_MEM;
+    wire [1:0] MemtoReg_MEM;
+    //wire RegWrite_MEM;
+    wire [31:0] dataB_MEM;
     wire LoadByte_MEM;
+    wire [31:0] PC_MEM;
     EX_MEM EXMEMReg(
-        clk, reset, MemRead_EX, MemWrite_EX, ALUOut_EX, Rw_EX, MemtoReg_EX, RegWrite_EX, rt_EX, LoadByte_EX,
-        MemRead_MEM, MemWrite_MEM, ALUOut_MEM, Rw_MEM, MemtoReg_MEM, RegWrite_MEM, rt_MEM, LoadByte_MEM  
+        clk, reset, MemRead_EX, MemWrite_EX, ALUOut_EX, Rw_EX, MemtoReg_EX, RegWrite_EX, dataB_EX, LoadByte_EX, PC_EX,
+        MemRead_MEM, MemWrite_MEM, ALUOut_MEM, Rw_MEM, MemtoReg_MEM, RegWrite_MEM, dataB_MEM, LoadByte_MEM, PC_MEM  
     );
 
     wire [31:0] ReadData_Temp;
-    DataMemory DataMem(clk, reset, ALUOut_MEM, rt_MEM, ReadData_Temp, MemRead_MEM, MemWrite_MEM);
+    DataMemory DataMem(clk, reset, ALUOut_MEM, dataB_MEM, ReadData_Temp, MemRead_MEM, MemWrite_MEM);
 
     wire [31:0] ReadData_MEM;
     assign ReadData_MEM = LoadByte_MEM == 0 ? ReadData_Temp :   
-                          rt_MEM[1:0] == 2'b00 ? {{24{ReadData_Temp[7]}}, ReadData_Temp[7:0]} :
-                          rt_MEM[1:0] == 2'b01 ? {{24{ReadData_Temp[15]}}, ReadData_Temp[15:8]} :
-                          rt_MEM[1:0] == 2'b10 ? {{24{ReadData_Temp[24]}}, ReadData_Temp[23:16]} :
+                          ALUOut_MEM[1:0] == 2'b00 ? {{24{ReadData_Temp[7]}}, ReadData_Temp[7:0]} :
+                          ALUOut_MEM[1:0] == 2'b01 ? {{24{ReadData_Temp[15]}}, ReadData_Temp[15:8]} :
+                          ALUOut_MEM[1:0] == 2'b10 ? {{24{ReadData_Temp[24]}}, ReadData_Temp[23:16]} :
                           {{24{ReadData_Temp[31]}}, ReadData_Temp[31:24]};
 
     // WB
-    
+    //wire RegWrite_WB;
+    wire [1:0] MemtoReg_WB;
+    //wire [4:0] Rw_WB;
+    wire [31:0] ReadData_WB;
+    wire [31:0] ALUOut_WB;
+    wire [31:0] PC_WB;
+    MEM_WB MEMWBReg(
+        clk, reset, RegWrite_MEM, MemtoReg_MEM, Rw_MEM, ReadData_MEM, ALUOut_MEM, PC_MEM,
+        RegWrite_WB, MemtoReg_WB, Rw_WB, ReadData_WB, ALUOut_WB, PC_WB
+    );
+
+    //wire [31:0] WriteData_WB;
+    assign WriteData_WB = MemtoReg_WB == 1 ? ReadData_WB :
+                          MemtoReg_WB == 2 ? PC_WB : ALUOut_WB;
 
     // PC
     assign PC_new = hold_IFID ? PC_now :
@@ -160,5 +180,7 @@ module PipelineCPU(
                     (Branch_ID && Zero) ? PC_now + ImmExtShift_ID : 
                     PC_now + 4;         
     PC PCConctroller(clk, reset, PC_new, PC_now);
-
+    
+    // out
+    assign out = ALUOut_WB;
 endmodule
