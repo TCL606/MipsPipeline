@@ -1,7 +1,7 @@
-// 规范TCL�??
-// 1.�??有模块需�?? clk �?? reset 的，clk 在第1位，reset 在第2�??
-// 2.分支指令�?? ID 阶段判断
-// 3.对于某阶段的寄存器，命名方式为：名称_阶段，如 PC_new。在该阶段产生的控制信号，可以省略阶段名�??
+// 规范TCL�??
+// 1.�??有模块需�?? clk �?? reset 的，clk 在第1位，reset 在第2�??
+// 2.分支指令�?? ID 阶段判断
+// 3.对于某阶段的寄存器，命名方式为：名称_阶段，如 PC_new。在该阶段产生的控制信号，可以省略阶段名�??
 // 4.load后暂时不能接branch
 `timescale 1ns / 1ps
 module PipelineCPU(
@@ -72,6 +72,7 @@ module PipelineCPU(
     
     wire [4:0] Rw_MEM;
     wire RegWrite_MEM;
+    wire [31:0] ALUOut_MEM;
     BranchForwarding BrForwarding(rs_ID, rt_ID, Rw_MEM, RegWrite_MEM, BrForwardingA, BrForwardingB);
     assign BrJuderA = BrForwardingA ? ALUOut_MEM : dataA_ID;
     assign BrJuderB = BrForwardingB ? ALUOut_MEM : dataB_ID;
@@ -112,7 +113,7 @@ module PipelineCPU(
 
     assign Rw_EX = RegDst_EX == 2'b00 ? rt_EX : RegDst_EX == 2'b01 ? rd_EX : 31; // 0: rt; 1: rd; 2: ra
    
-    assign hold_IFID = (RegWrite_EX && Branch_EX && (Rw_EX == rs_EX || Rw_EX == rt_EX)) ||
+    assign hold_IFID = (RegWrite_EX && Branch_ID && (Rw_EX == rs_ID || Rw_EX == rt_ID)) ||
                        (MemRead_EX && (rt_EX == rs_ID || rt_EX == rt_ID));  // next inst is branch, stall || load use hazard
     assign flush_IDEX = hold_IFID;
 
@@ -135,7 +136,7 @@ module PipelineCPU(
     // MEM
     wire MemRead_MEM;
     wire MemWrite_MEM;
-    wire [31:0] ALUOut_MEM;
+    //wire [31:0] ALUOut_MEM;
     //wire [4:0] Rw_MEM;
     wire [1:0] MemtoReg_MEM;
     //wire RegWrite_MEM;
