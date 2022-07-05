@@ -23,6 +23,7 @@ module ID_EX(
     input wire Sign_ID,
     input wire LoadByte_ID,
     input wire [31:0] PC_ID,
+    input wire Load_ID,
 
     output reg RegWrite_EX,
     output reg Branch_EX,
@@ -42,7 +43,8 @@ module ID_EX(
     output reg [4:0] rd_EX,
     output reg Sign_EX,
     output reg LoadByte_EX,
-    output reg [31:0] PC_EX
+    output reg [31:0] PC_EX,
+    output reg Load_EX
 );
 
 initial begin
@@ -65,6 +67,7 @@ initial begin
     Sign_EX <= 0;
     LoadByte_EX <= 0;
     PC_EX <= 0;
+    Load_EX <= 0;
 end
 
 always@(posedge clk or posedge reset) begin
@@ -88,6 +91,7 @@ always@(posedge clk or posedge reset) begin
         Sign_EX <= 0;
         LoadByte_EX <= 0;
         PC_EX <= 0;
+        Load_EX <= 0;
     end
     else begin
         RegWrite_EX <= RegWrite_ID;
@@ -109,6 +113,7 @@ always@(posedge clk or posedge reset) begin
         Sign_EX <= Sign_ID;
         LoadByte_EX <= LoadByte_ID;
         PC_EX <= PC_ID;
+        Load_EX <= Load_ID;
     end
     // else begin
     //     RegWrite_EX <= RegWrite_EX;

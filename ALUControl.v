@@ -28,6 +28,7 @@ reg Sign;
 always @(OpCode, Funct) begin
     case(OpCode)
     6'h23: ALUCtrl <= ADD;  // lw
+    6'h20: ALUCtrl <= ADD;  // lb
     6'h2b: ALUCtrl <= ADD;  // sw
     6'h0f: ALUCtrl <= ADD; // lui
     6'h08: begin
