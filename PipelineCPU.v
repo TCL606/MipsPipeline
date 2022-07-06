@@ -27,7 +27,9 @@ module PipelineCPU(
     wire [31:0] PC_ID;
     wire flush_IFID;
     wire hold_IFID;
-    IF_ID IFIDReg(clk, reset, flush_IFID, hold_IFID, Instruction, PC_now, OpCode_ID, rs_ID, rt_ID, rd_ID, Shamt_ID, Funct_ID, PC_ID);
+
+    wire Load_EX;
+    IF_ID IFIDReg(clk, reset, flush_IFID, hold_IFID, Load_EX, Instruction, PC_now, OpCode_ID, rs_ID, rt_ID, rd_ID, Shamt_ID, Funct_ID, PC_ID);
 
     wire [1:0] PCSrc_ID;
 	wire Branch_ID;
@@ -108,7 +110,7 @@ module PipelineCPU(
     wire Sign_EX;
     wire LoadByte_EX;
     wire [31:0] PC_EX;
-    wire Load_EX;
+    //wire Load_EX;
     ID_EX IDEXReg(
         clk, reset, flush_IDEX, RegWrite_ID, Branch_ID, MemRead_ID, MemWrite_ID, 
         MemtoReg_ID, ALUSrcA_ID, ALUSrcB_ID, ALUCtrl_ID, RegDst_ID, dataA_ID, dataB_ID, 

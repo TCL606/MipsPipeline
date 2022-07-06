@@ -4,6 +4,8 @@ module IF_ID(
     input wire reset,
     input wire flush_IFID,
     input wire hold,
+    input wire Load_EX,     // if Load, flush is more important than hold
+
     input wire [31:0] Instruction,
     input wire [31:0] PC_IF,
     output reg [5:0] OpCode,
@@ -26,7 +28,7 @@ initial begin
 end
 
 always @(posedge clk or posedge reset) begin
-    if(reset || flush_IFID) begin       // || flush_IFID
+    if(reset || (flush_IFID && Load_EX)) begin       // || flush_IFID
         OpCode <= 0;
         rs <= 0;
         rt <= 0;
@@ -43,6 +45,15 @@ always @(posedge clk or posedge reset) begin
         Shamt <= Shamt;
         Funct <= Funct;
         PC_ID <= PC_ID;
+    end
+    else if (flush_IFID) begin
+        OpCode <= 0;
+        rs <= 0;
+        rt <= 0;
+        rd <= 0;
+        Shamt <= 0;
+        Funct <= 0;
+        PC_ID <= 0;
     end
     else begin
         OpCode <= Instruction[31:26];
