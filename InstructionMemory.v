@@ -53,11 +53,13 @@ module InstructionMemory(Address, Instruction);
 		data[9'd16] <= 32'h81ad0000;
 		data[9'd17] <= 32'h158d0002;
 		data[9'd18] <= 32'h21290001;
-		data[9'd19] <= 32'h0810000a;
+		//data[9'd19] <= 32'h0800000a;
+		data[9'd19] <= 32'h1000fff6;
 		data[9'd20] <= 32'h15260001;
 		data[9'd21] <= 32'h22100001;
 		data[9'd22] <= 32'h21080001;
-		data[9'd23] <= 32'h08100007;
+		//data[9'd23] <= 32'h08000007;
+		data[9'd23] <= 32'h1000ffef;
 		data[9'd24] <= 32'h00101020;
 		//data[9'd25] <= 32'h1000ffff;
 		for (i = 9'd25; i < MEM_SIZE; i = i + 1) begin

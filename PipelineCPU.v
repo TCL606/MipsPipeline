@@ -164,7 +164,7 @@ module PipelineCPU(
     assign ReadData_MEM = LoadByte_MEM == 0 ? ReadData_Temp :   
                           ALUOut_MEM[1:0] == 2'b00 ? {{24{ReadData_Temp[7]}}, ReadData_Temp[7:0]} :
                           ALUOut_MEM[1:0] == 2'b01 ? {{24{ReadData_Temp[15]}}, ReadData_Temp[15:8]} :
-                          ALUOut_MEM[1:0] == 2'b10 ? {{24{ReadData_Temp[24]}}, ReadData_Temp[23:16]} :
+                          ALUOut_MEM[1:0] == 2'b10 ? {{24{ReadData_Temp[23]}}, ReadData_Temp[23:16]} :
                           {{24{ReadData_Temp[31]}}, ReadData_Temp[31:24]};
 
     // WB
