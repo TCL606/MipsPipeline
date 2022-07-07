@@ -8,8 +8,8 @@ module PipelineCPU(
 );
     
     wire clk;
-    CLK CLKController(sysclk, reset, clk);
-    //assign clk = sysclk;
+    //CLK CLKController(sysclk, reset, clk);
+    assign clk = sysclk;
     wire [31:0] Instruction;
     wire [31:0] PC_now;   // PC_IF
     wire [31:0] PC_new;
