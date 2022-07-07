@@ -6,10 +6,10 @@ module PipelineCPU(
     output wire [7:0] bcd7,
     output wire [3:0] an
 );
-
+    
     wire clk;
-    assign clk = sysclk;
-
+    CLK CLKController(sysclk, reset, clk);
+    //assign clk = sysclk;
     wire [31:0] Instruction;
     wire [31:0] PC_now;   // PC_IF
     wire [31:0] PC_new;
@@ -160,6 +160,7 @@ module PipelineCPU(
     );
 
     wire [31:0] ReadData_Temp;
+
     DataMemory DataMem(clk, reset, ALUOut_MEM, dataB_MEM, ReadData_Temp, MemRead_MEM, MemWrite_MEM, leds, bcd7, an);
 
     wire [31:0] ReadData_MEM;

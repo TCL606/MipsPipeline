@@ -5,7 +5,7 @@ module BranchForwarding(
     input wire [4:0] Rw_MEM,
     input wire RegWrite_MEM,
     input wire Load_WB,
-    input wire Rw_WB,
+    input wire [4:0] Rw_WB,
     output wire [1:0] BrForwardingA,
     output wire [1:0] BrForwardingB
 );

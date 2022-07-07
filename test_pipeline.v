@@ -2,19 +2,19 @@
 module test_pipeline();
 	
 	reg reset;
-	reg clk;
+	reg sysclk;
 	wire [7:0] leds;
 	wire [7:0] bcd7;
 	wire [3:0] an;
 	
-	PipelineCPU pipelineCpu(clk, reset, leds, bcd7, an);
+	PipelineCPU pipelineCpu(sysclk, reset, leds, bcd7, an);
 	
 	initial begin
 		reset = 1;
-		clk = 1;
+		sysclk = 1;
 		#10 reset = 0;
 	end
 	
-	always #5 clk = ~clk;
+	always #5 sysclk = ~sysclk;
 		
 endmodule
