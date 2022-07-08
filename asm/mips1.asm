@@ -80,34 +80,49 @@ srl $t2 $t2 1
 an_exit:
 addi $t1 $zero 0
 beq $t2 $t1 bcd0
+
 addi $t1 $zero 1
 beq $t2 $t1 bcd1
+
 addi $t1 $zero 2
 beq $t2 $t1 bcd2
+
 addi $t1 $zero 3
 beq $t2 $t1 bcd3
+
 addi $t1 $zero 4
 beq $t2 $t1 bcd4
+
 addi $t1 $zero 5
 beq $t2 $t1 bcd5
+
 addi $t1 $zero 6
 beq $t2 $t1 bcd6
+
 addi $t1 $zero 7
 beq $t2 $t1 bcd7
+
 addi $t1 $zero 8
 beq $t2 $t1 bcd8
+
 addi $t1 $zero 9
 beq $t2 $t1 bcd9
+
 addi $t1 $zero 10
 beq $t2 $t1 bcda
+
 addi $t1 $zero 11
 beq $t2 $t1 bcdb
+
 addi $t1 $zero 12
 beq $t2 $t1 bcdc
+
 addi $t1 $zero 13
 beq $t2 $t1 bcdd
+
 addi $t1 $zero 14
 beq $t2 $t1 bcde
+
 addi $t1 $zero 15
 beq $t2 $t1 bcdf
 

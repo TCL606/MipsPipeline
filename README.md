@@ -1,14 +1,6 @@
-# 实验报告：MIPS五级流水线CPU
+# MIPS五级流水线CPU
 
----
-
-无03 唐昌礼 2020010694
-
----
-
-## 实验目的
-
-设计一个支持MIPS指令集的五级流水线CPU，并利用此处理器完成字符串搜索算法。
+本仓库使用`verilog`编写MIPS五级流水线CPU。
 
 ## 设计方案
 
@@ -20,11 +12,11 @@
 
 ### 设计实现的指令集
 
-我设计的流水线CPU，能够实现大多数MIPS指令，在春季学期在单周期、多周期CPU上已实现的指令外，还增添了以下指令：`lb、bne、blez、bgtz、bltz、jal、jalr、jr、jalr` 等。
+设计的流水线CPU，能够实现大多数MIPS指令，在春季学期在单周期、多周期CPU上已实现的指令外，还增添了以下指令：`lb、bne、blez、bgtz、bltz、jal、jalr、jr、jalr` 等。
 
 ### 设计框图
 
-我在马洪兵老师课件的`ID`阶段判断分支的流水线设计框图上进一步修改，得到我设计的流水线的设计框图如下：
+设计框图如下：
 
 ![design](img/design.png)
 
@@ -297,158 +289,3 @@ assign ReadData_MEM = LoadByte_MEM == 0 ? ReadData_Temp :
 
 其中，`ReadData_Temp`是从`DataMemory`中读取出的字。
 
-## 仿真结果及分析
-
-### 计算过程分析
-
-仿真采用`./asm/mips1.asm`代码。要复现仿真结果，只需将`DataMemory.v`里`initial`和`reset`部分的代码，都选取上方只有0-7的部分，并在`InstructionMemory.v`中的第0条指令选用`data[9'd0] <= 32'h20040020;`
-
-代码采用的`Brute-Force`暴力算法，下面我们分析代码的执行过程。
-
-待搜索的字符串为多周期大作业中的示例：`linuxisnotunixisnotunixisnotunix`，子串为`unix`。
-
-我将主串从`DataMemory`第0位地址开始存储，子串从`DataMemory`的第100位地址开始存储。主串中`lb`出来的字节存在`$t6`寄存器（第14号）中，子串中`lb`出来的字节存在`$t7`寄存器（第15号）寄存器中。可以观察匹配的过程如下：
-
-![simulation_matching](img/simulation_matching.png)
-
-主要关注第14号寄存器与第15号寄存器，他们分别代表从主串与从子串中`lb`出来的字节。我这里简单起见，都使用有十进制符号数格式进行查看。
-
-可以看到，首先子串`load`出第一个字节117，与主串进行匹配，主串在前3个字节都没有匹配上，因此主串开始移动，第4个字节时主串也为117了，匹配成功1个字节，随后主串与子串共同向后移动，开始匹配子串的第2个字节。子串第2个字节为110，与主串第5个字节120不匹配，再次失配，使子串回到第1个字节，主串继续向后移动。这个过程与理论分析相符。
-
-计算的最后结果保存在`$v0`寄存器中，`$v0`寄存器的值如下图
-
-![simulation_v0](img/simulation_v0.png)
-
-`$v0`寄存器为第2号寄存器，可以看到最后算出了正确的值3。
-
-### CPI
-
-接下来在Mars里看下执行了多少指令。我从开始执行`Brute-Force`开始，到算出正确结果3结束，总共执行的指令数为526，如下图所示：
-
-![inst_num](img/inst_num.png)
-
-在仿真中，共消耗了8580ns的时间，10ns一个周期，总计858个周期。
-
-从而计算得到CPI为
-$$
-CPI=\frac{858}{526}=1.63
-$$
-该CPI较高主要是因为该程序中反复运行`lb`后接`bne`的指令，且数据冒险总会发生，导致程序不得不在`bne`后`stall`两个周期。
-
-## 资源与时序性能
-
-### 资源情况
-
-#### 流水线资源情况
-
-流水线CPU资源占用情况如下
-
-![resource](img/resource.png)
-
-![summary](img/summary.png)
-
-总共使用了6672个LUT，18148个寄存器，22个IO端口。
-
-#### Schematic
-
-设计简图如下：
-
-![schematic](img/schematic.png)
-
-#### 与单周期、多周期的对比
-
-上学期实现的单周期CPU中，占用3398个LUT，8389个寄存器；
-
-上学期实现的多周期CPU中，占用4304个LUT，9434个寄存器。
-
-可以看到，流水线CPU还是非常吃资源的，在LUT的使用与寄存器的使用上都远远超过单周期与多周期的实现。
-
-### 时序性能
-
-#### 虚拟时钟
-
-综合时，我使用周期为20ns的虚拟时钟。
-
-#### 时序情况
-
-流水线CPU时序情况如下：
-
-![timing](img/timing.png)
-
-总共检查35602个点，WNS为10.762ns，WHS为0.134ns。
-
-考虑关键路径的延时如下：
-
-![max_delay](img/max_delay.png)
-
-最高延时为9.087ns。
-
-从而，可以计算出我设计的流水线CPU，频率最高为
-$$
-f_{max}=\frac{1}{9.087ns}=110.05MHz
-$$
-这个频率已经超过了FPGA提供的100MHz，因此我在后期上板子时，都直接接系统时钟作为CPU的时钟。这么做计算的结果也是正确的，说明主频的确超过了100MHz。
-
-#### 与单周期、多周期的对比
-
-上学期我设计的单周期CPU，最高频率为72.61MHz；多周期CPU，最高频率为102.86MHz。而现在实现的流水线CPU，主频最高可达110.05MHz，在时钟频率上的性能超过了之前设计的单周期与多周期CPU。
-
-## 硬件调试情况
-
-在写好代码后上板子时，我在一开始遇到了仿真结果正确，但是实际结果错误的情况。这个bug非常难找到，我曾一度认为时钟周期的问题。我不断降低时钟周期，将原频率100分频后，结果仍然错误，此时我确定不是由于时钟周期的问题，而是其他的原因。
-
-我将PC显示在LED上，将时钟周期设置为1s，在板子上仔细查看PC值的变化。结果显示，PC的值运行相对正常，在`Branch`与`J`指令都能够正常`stall`，看不出什么问题。
-
-然后我仔细分析FPGA计算的错误结果，发现程序结果是统计了子串移动的次数，而不是成功匹配的次数。这让我非常疑惑。在细致的debug后，我将问题确定为`Load`指令失败。
-
-在一系列操作后，我发现我的`DataMemory`使用了`initial`块进行初始化，而这有可能会初始化失败。因此，我在`reset`中也添加了初始化代码，发现结果运行正确！这个问题有点玄学，我合理怀疑问题就是因为`initial`块初始化内存失败。
-
-## 最终运行结果
-
-由于综合后的时钟频率超过了100MHz，因此我直接使用FPGA的系统时钟作为我流水线CPU的时钟。
-
-将代码烧录到FPGA上（代码中已将结果写入BCD管与LED管中），呈现的结果如下：
-
-![result_3](img/result_3.jpg)
-
-可以看到，流水线CPU计算出了正确的结果。
-
-由于原本的例子字符串长度较小，搜索起来可能比较简单，我设计了一个更长字符串搜索问题作为样例，放到流水线CPU上测试。测试样例位于`DataMemory.v`中，是原本样例的下面。在`initial`中与在`reset`中选用初始化0-28行的代码，并将`InstructionMemory.v`的第0条指令设为`data[9'd0] <= 32'h20040074`，就是我设计的另一个测试样例。
-
-主串：`abcdxabcdsseabcdscxabcdfsabcdvabcdaacdabcdcabcpabcdnabcdqwerabcdlabcdggabcdgabcdgabcdeceaaemabcdlkdrabcdbbabcdccabcd`
-
-子串：`abcd`
-
-主串长度116，子串在主串中出现了18次。可以用如下Python代码进行验证
-
-~~~python
-st = "abcdxabcdsseabcdscxabcdfsabcdvabcdaacdabcdcabcpabcdnabcdqwerabcdlabcdggabcdgabcdgabcdeceaaemabcdlkdrabcdbbabcdccabcd"
-sub = "abcd"
-
-if __name__ == "__main__":
-    length = len(st)
-    print(length)
-    cnt = 0
-    for i in range(length - 3):
-        if(st[i: i + 4] == sub):
-            cnt += 1
-    print(cnt)
-~~~
-
-将修改好的代码烧录到FPGA上运行，结果如下：
-
-![result_18](img/result_18.jpg)
-
-结果为0x12，即十进制的18，计算结果正确。
-
-## 实验总结
-
-编写MIPS五级流水线CPU，是一个浩大的工程，也是将数逻理论课上所学运用到实践一个重要过程。
-
-在设计流水线CPU的过程中，我希望挑战自己，设计一个在`ID`阶段提前判断`Branch`的流水线CPU。`ID`阶段提前判断分支，数逻理论课上只是稍微提了一点，对设计细节没有太多介绍。因此，如何避免提前分支引起的冒险、控制信号该如何设计等问题，是我在设计该流水线CPU中仔细思考的问题。在一遍遍的尝试后，我最终确定了目前设计的方案。最后在时钟频率上效果良好，仿真与上板子的结果也都正确。
-
-## 文件清单
-
-在`src`目录中存放了所有`verilog`文件，包括`ALU.v、ALUControl.v、ALUForwarding.v、BranchForwarding.v、BranchJudge.v、CLK.v、Control.v、DataMemory.v、EX_MEM.v、ID_EX.v、IF_ID.v、ImmProcess.v、InstructionMemory.v、MEM_WB.v、PC.v、PipelineCPU.v、RegisterFile.v、test_pipeline.v`。其中`CLK.v`为分频器，由于我设计的流水线频率已经超过了100MHz，所有该模块并没有被真正烧录到流水线CPU中；`test_pipeline.v`为测试testbench文件。`src`目录中也存放了`contrain.xdc`文件。
-
-在`asm`目录下`mips1.asm`为汇编文件，流水线CPU中的`InstructionMemory.v`的初始化由该文件翻译而来。
